@@ -15,6 +15,17 @@ HTML_TEMPLATE = '''
         button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
         .result { margin-top: 20px; padding: 15px; background: #e8f4e8; border-radius: 5px; }
         .error { background: #f8e8e8; color: red; }
+        /* Стили для красивой таблицы */
+        .matrix-table {
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .matrix-table td {
+            border: 1px solid #4CAF50;
+            padding: 10px 15px;
+            text-align: center;
+            min-width: 50px;
+        }
     </style>
 </head>
 <body>
@@ -25,14 +36,25 @@ HTML_TEMPLATE = '''
             <textarea name="matrix_a" rows="4">{{ matrix_a }}</textarea><br><br>
             <b>Ядро свёртки B:</b><br>
             <textarea name="matrix_b" rows="3">{{ matrix_b }}</textarea><br><br>
-            <button type="submit"> Вычислить свёртку</button>
+            <button type="submit">🚀 Вычислить свёртку</button>
         </form>
-        {% if result %}
+
+        <!-- Красивый вывод результата в виде таблицы -->
+        {% if result_matrix %}
         <div class="result">
-            <b>Результат свёртки:</b><br>
-            <pre>{{ result }}</pre>
+            <b>Результат свёртки:</b><br><br>
+            <table class="matrix-table">
+                {% for row in result_matrix %}
+                <tr>
+                    {% for val in row %}
+                    <td>{{ val }}<\/td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            虚拟
         </div>
         {% endif %}
+
         {% if error %}
         <div class="result error">
             <b>Ошибка:</b> {{ error }}
@@ -75,7 +97,7 @@ def index():
             return render_template_string(HTML_TEMPLATE,
                                           matrix_a=matrix_a_str,
                                           matrix_b=matrix_b_str,
-                                          result=json.dumps(res, indent=2))
+                                          result_matrix=res)
         except Exception as e:
             return render_template_string(HTML_TEMPLATE,
                                           matrix_a=matrix_a_str,
