@@ -47,11 +47,11 @@ HTML_TEMPLATE = '''
                 {% for row in result_matrix %}
                 <tr>
                     {% for val in row %}
-                    <td>{{ val }}<\/td>
+                    <td>{{ val }}</td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
-            虚拟
+            </table>
         </div>
         {% endif %}
 
