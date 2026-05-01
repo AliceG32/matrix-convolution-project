@@ -35,7 +35,7 @@
 ```bash
 # Установка
 apt install python3 python3-pip apache2 -y
-pip install flask
+pip install -r requirements.txt
 
 # Запуск Flask
 nohup python3 app.py &
