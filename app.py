@@ -78,17 +78,84 @@ HTML_TEMPLATE = '''
             font-size: 12px;
             padding: 5px 10px;
         }
+        .layer-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .layer-card h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
     </style>
     <script>
         function switchMode(mode) {
             document.getElementById('mode-matrix').style.display = mode === 'matrix' ? 'block' : 'none';
             document.getElementById('mode-image').style.display = mode === 'image' ? 'block' : 'none';
+            document.getElementById('mode-multilayer').style.display = mode === 'multilayer' ? 'block' : 'none';
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.mode-btn[onclick="switchMode('${mode}')"]`).classList.add('active');
         }
 
         function setKernel(kernel) {
             document.getElementById('custom_kernel').value = kernel;
+        }
+
+        let layerCounter = 0;
+        
+        function addLayer() {
+            layerCounter++;
+            const container = document.getElementById('layers-container');
+            const newLayer = document.createElement('div');
+            newLayer.className = 'layer-card';
+            newLayer.setAttribute('data-layer', layerCounter);
+            newLayer.innerHTML = `
+                <h4>📌 Слой ${layerCounter}</h4>
+                <label>Название слоя:</label>
+                <input type="text" name="name_${layerCounter}" value="Слой ${layerCounter}" style="width: 200px;"><br><br>
+                <label>Ядро (матрица 3x3):</label><br>
+                <textarea name="kernel_${layerCounter}" rows="2" cols="40" placeholder="[[1,2,1],[2,4,2],[1,2,1]]/16"></textarea><br>
+                <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+            `;
+            container.appendChild(newLayer);
+        }
+        
+        function removeLayer(layerNum) {
+            const layer = document.querySelector(`.layer-card[data-layer="${layerNum}"]`);
+            if (layer) layer.remove();
+        }
+        
+        function loadArchitecture(type) {
+            document.getElementById('layers-container').innerHTML = '';
+            layerCounter = 0;
+        
+            if (type === 'edges') {
+                addLayerWithKernel('Границы', '[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]');
+                addLayerWithKernel('Размытие', '[[1,1,1],[1,1,1],[1,1,1]]/9');
+                addLayerWithKernel('Резкость', '[[0,-1,0],[-1,5,-1],[0,-1,0]]');
+            } else if (type === 'blur') {
+                addLayerWithKernel('Размытие 1', '[[1,1,1],[1,1,1],[1,1,1]]/9');
+                addLayerWithKernel('Размытие 2', '[[1,1,1],[1,1,1],[1,1,1]]/9');
+            } else if (type === 'sharpen') {
+                addLayerWithKernel('Резкость', '[[0,-1,0],[-1,5,-1],[0,-1,0]]');
+            }
+        }
+        
+        function addLayerWithKernel(name, kernel) {
+            layerCounter++;
+            const container = document.getElementById('layers-container');
+            const newLayer = document.createElement('div');
+            newLayer.className = 'layer-card';
+            newLayer.setAttribute('data-layer', layerCounter);
+            newLayer.innerHTML = `
+                <h4>📌 Слой ${layerCounter}</h4>
+                <input type="text" name="name_${layerCounter}" value="${name}" style="width: 200px;"><br><br>
+                <textarea name="kernel_${layerCounter}" rows="2" cols="40">${kernel}</textarea><br>
+                <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить</button>
+            `;
+            container.appendChild(newLayer);
         }
     </script>
 </head>
@@ -100,6 +167,7 @@ HTML_TEMPLATE = '''
         <div class="mode-selector">
             <button class="mode-btn active" onclick="switchMode('matrix')">📊 Режим: ввод матриц</button>
             <button class="mode-btn" onclick="switchMode('image')">🖼️ Режим: обработка изображений</button>
+            <button class="mode-btn" onclick="switchMode('multilayer')"> Режим: конструктор CNN</button>
         </div>
 
         <div id="mode-matrix">
@@ -210,6 +278,64 @@ HTML_TEMPLATE = '''
             {% endif %}
         </div>
 
+        <div id="mode-multilayer" style="display:none">
+            <h3>🏗️ Конструктор свёрточной сети</h3>
+            <p>Добавляйте слои с разными ядрами. <b>ReLU</b> (обнуление отрицательных значений) применяется автоматически между слоями!</p>
+
+            <form method="post" action="/multilayer" enctype="multipart/form-data">
+                <b>Загрузите изображение:</b><br>
+                <input type="file" name="image" accept="image/*" required><br><br>
+
+                <div id="layers-container">
+                    <div class="layer-card" data-layer="1">
+                        <h4>📌 Слой 1</h4>
+                        <label>Название слоя:</label>
+                        <input type="text" name="name_1" value="Границы" style="width: 200px;"><br><br>
+                        <label>Ядро (матрица 3x3):</label><br>
+                        <textarea name="kernel_1" rows="2" cols="40">[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]</textarea><br>
+                        <button type="button" onclick="removeLayer(1)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                    </div>
+                    <div class="layer-card" data-layer="2">
+                        <h4>📌 Слой 2</h4>
+                        <label>Название слоя:</label>
+                        <input type="text" name="name_2" value="Размытие" style="width: 200px;"><br><br>
+                        <label>Ядро (матрица 3x3):</label><br>
+                        <textarea name="kernel_2" rows="2" cols="40">[[1,1,1],[1,1,1],[1,1,1]]/9</textarea><br>
+                        <button type="button" onclick="removeLayer(2)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                    </div>
+                </div>
+
+                <button type="button" onclick="addLayer()">➕ Добавить свёрточный слой</button>
+                <button type="button" onclick="loadArchitecture('edges')" style="background:#28a745;">🔲 Границы → Размытие → Резкость</button>
+                <button type="button" onclick="loadArchitecture('blur')" style="background:#28a745;">📷 Только размытие (2 слоя)</button>
+                <button type="button" onclick="loadArchitecture('sharpen')" style="background:#28a745;">🔪 Только резкость</button>
+
+                <br><br>
+                <button type="submit">🚀 Запустить нейросеть</button>
+            </form>
+
+            {% if multilayer_original %}
+            <div class="flex-container" style="margin-top: 30px;">
+                <div class="image-box">
+                    <b>📸 Оригинал:</b><br>
+                    <img src="data:image/png;base64,{{ multilayer_original }}" alt="Оригинал">
+                </div>
+                {% for res in multilayer_results %}
+                <div class="image-box">
+                    <b>{{ res.name }}<br>(после слоя {{ res.layer }})</b><br>
+                    <img src="data:image/png;base64,{{ res.image_b64 }}" alt="После слоя {{ res.layer }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if multilayer_error %}
+            <div class="result error">
+                <b>Ошибка:</b> {{ multilayer_error }}
+            </div>
+            {% endif %}
+        </div>
+
         {% if error %}
         <div class="result error">
             <b>Ошибка:</b> {{ error }}
@@ -256,6 +382,7 @@ def convolution_matrix(matrix, kernel, stride=1, padding=0):
 
 
 def parse_kernel(kernel_str):
+    kernel_str = kernel_str.strip()
     if '/' in kernel_str:
         parts = kernel_str.split('/')
         kernel = json.loads(parts[0])
@@ -269,6 +396,22 @@ def parse_kernel(kernel_str):
             kernel[i][j] = kernel[i][j] / divisor
 
     return kernel
+
+
+def apply_relu(matrix):
+    return [[max(0, val) for val in row] for row in matrix]
+
+
+def normalize_matrix_for_display(matrix):
+    min_val = min(min(row) for row in matrix)
+    max_val = max(max(row) for row in matrix)
+
+    if max_val - min_val > 0:
+        normalized = [[int((val - min_val) * 255 / (max_val - min_val)) for val in row] for row in matrix]
+    else:
+        normalized = [[128 for val in row] for row in matrix]
+
+    return normalized
 
 
 @app.route('/', methods=['GET'])
@@ -351,6 +494,68 @@ def image_mode():
     except Exception as e:
         return render_template_string(HTML_TEMPLATE,
                                       error=f"Ошибка обработки: {str(e)}")
+
+
+@app.route('/multilayer', methods=['POST'])
+def multilayer_mode():
+    try:
+        file = request.files['image']
+        img = Image.open(file.stream).convert('L')
+        img_array = [[float(img.getpixel((x, y))) for x in range(img.width)] for y in range(img.height)]
+
+        layers = []
+        for key in request.form:
+            if key.startswith('kernel_'):
+                layer_num = key.split('_')[1]
+                kernel_str = request.form[key]
+                if kernel_str and kernel_str.strip():
+                    kernel = parse_kernel(kernel_str)
+                    layer_name = request.form.get(f'name_{layer_num}', f'Слой {layer_num}')
+                    layers.append({
+                        'kernel': kernel,
+                        'name': layer_name
+                    })
+
+        if not layers:
+            layers = [
+                {'kernel': parse_kernel('[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]'), 'name': 'Границы'},
+                {'kernel': parse_kernel('[[1,1,1],[1,1,1],[1,1,1]]/9'), 'name': 'Размытие'},
+                {'kernel': parse_kernel('[[0,-1,0],[-1,5,-1],[0,-1,0]]'), 'name': 'Резкость'}
+            ]
+
+        results = []
+        current = img_array
+
+        for i, layer in enumerate(layers):
+            conv_result = convolution_matrix(current, layer['kernel'])
+            relu_result = apply_relu(conv_result)
+            normalized = normalize_matrix_for_display(relu_result)
+
+            res_img = Image.new('L', (len(normalized[0]), len(normalized)))
+            for y in range(len(normalized)):
+                for x in range(len(normalized[0])):
+                    res_img.putpixel((x, y), int(normalized[y][x]))
+
+            buf = io.BytesIO()
+            res_img.save(buf, format='PNG')
+            results.append({
+                'name': layer['name'],
+                'layer': i + 1,
+                'image_b64': base64.b64encode(buf.getvalue()).decode()
+            })
+
+            current = relu_result
+
+        original_buf = io.BytesIO()
+        img.save(original_buf, format='PNG')
+        original_b64 = base64.b64encode(original_buf.getvalue()).decode()
+
+        return render_template_string(HTML_TEMPLATE,
+                                      multilayer_original=original_b64,
+                                      multilayer_results=results)
+    except Exception as e:
+        return render_template_string(HTML_TEMPLATE,
+                                      multilayer_error=f"Ошибка: {str(e)}")
 
 
 if __name__ == '__main__':
