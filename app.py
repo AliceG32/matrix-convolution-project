@@ -105,20 +105,34 @@ HTML_TEMPLATE = '''
 
         let layerCounter = 0;
         
-        function addLayer() {
+        function addLayer(type) {
             layerCounter++;
             const container = document.getElementById('layers-container');
             const newLayer = document.createElement('div');
             newLayer.className = 'layer-card';
             newLayer.setAttribute('data-layer', layerCounter);
-            newLayer.innerHTML = `
-                <h4>📌 Слой ${layerCounter}</h4>
-                <label>Название слоя:</label>
-                <input type="text" name="name_${layerCounter}" value="Слой ${layerCounter}" style="width: 200px;"><br><br>
-                <label>Ядро (матрица 3x3):</label><br>
-                <textarea name="kernel_${layerCounter}" rows="2" cols="40" placeholder="[[1,2,1],[2,4,2],[1,2,1]]/16"></textarea><br>
-                <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
-            `;
+            newLayer.setAttribute('data-type', type);
+            
+            if (type === 'conv') {
+                newLayer.innerHTML = `
+                    <h4>📌 Слой ${layerCounter} (Свёртка)</h4>
+                    <label>Название слоя:</label>
+                    <input type="text" name="name_${layerCounter}" value="Слой ${layerCounter}" style="width: 200px;"><br><br>
+                    <label>Тип: Свёртка</label><br>
+                    <label>Ядро (матрица 3x3):</label><br>
+                    <textarea name="kernel_${layerCounter}" rows="2" cols="40" placeholder="[[1,2,1],[2,4,2],[1,2,1]]/16"></textarea><br>
+                    <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                `;
+            } else if (type === 'pool') {
+                newLayer.innerHTML = `
+                    <h4>📌 Слой ${layerCounter} (MaxPooling)</h4>
+                    <input type="text" name="name_${layerCounter}" value="MaxPooling ${layerCounter}" style="width: 200px;"><br><br>
+                    <label>Тип: MaxPooling (уменьшает картинку в 2 раза)</label><br>
+                    <input type="hidden" name="is_pool_${layerCounter}" value="true">
+                    <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                `;
+            }
+            
             container.appendChild(newLayer);
         }
         
@@ -135,6 +149,10 @@ HTML_TEMPLATE = '''
                 addLayerWithKernel('Границы', '[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]');
                 addLayerWithKernel('Размытие', '[[1,1,1],[1,1,1],[1,1,1]]/9');
                 addLayerWithKernel('Резкость', '[[0,-1,0],[-1,5,-1],[0,-1,0]]');
+            } else if (type === 'vgg_block') {
+                addLayerWithKernel('Свёртка 1', '[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]');
+                addLayerWithKernel('Свёртка 2', '[[1,2,1],[2,4,2],[1,2,1]]/16');
+                addPoolingLayerWithName('MaxPooling 2x2');
             } else if (type === 'blur') {
                 addLayerWithKernel('Размытие 1', '[[1,1,1],[1,1,1],[1,1,1]]/9');
                 addLayerWithKernel('Размытие 2', '[[1,1,1],[1,1,1],[1,1,1]]/9');
@@ -149,10 +167,28 @@ HTML_TEMPLATE = '''
             const newLayer = document.createElement('div');
             newLayer.className = 'layer-card';
             newLayer.setAttribute('data-layer', layerCounter);
+            newLayer.setAttribute('data-type', 'conv');
             newLayer.innerHTML = `
-                <h4>📌 Слой ${layerCounter}</h4>
+                <h4>📌 Слой ${layerCounter} (Свёртка)</h4>
                 <input type="text" name="name_${layerCounter}" value="${name}" style="width: 200px;"><br><br>
+                <label>Ядро (матрица 3x3):</label><br>
                 <textarea name="kernel_${layerCounter}" rows="2" cols="40">${kernel}</textarea><br>
+                <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить</button>
+            `;
+            container.appendChild(newLayer);
+        }
+        function addPoolingLayerWithName(name) {
+            layerCounter++;
+            const container = document.getElementById('layers-container');
+            const newLayer = document.createElement('div');
+            newLayer.className = 'layer-card';
+            newLayer.setAttribute('data-layer', layerCounter);
+            newLayer.setAttribute('data-type', 'pool');
+            newLayer.innerHTML = `
+                <h4>📌 Слой ${layerCounter} (MaxPooling)</h4>
+                <input type="text" name="name_${layerCounter}" value="${name}" style="width: 200px;"><br><br>
+                <label>Тип: MaxPooling (уменьшает картинку в 2 раза)</label><br>
+                <input type="hidden" name="is_pool_${layerCounter}" value="true">
                 <button type="button" onclick="removeLayer(${layerCounter})" style="background:#dc3545; margin-top:10px;">❌ Удалить</button>
             `;
             container.appendChild(newLayer);
@@ -287,16 +323,16 @@ HTML_TEMPLATE = '''
                 <input type="file" name="image" accept="image/*" required><br><br>
 
                 <div id="layers-container">
-                    <div class="layer-card" data-layer="1">
-                        <h4>📌 Слой 1</h4>
+                    <div class="layer-card" data-layer="1" data-type="conv">
+                        <h4>📌 Слой 1 (Свёртка)</h4>
                         <label>Название слоя:</label>
                         <input type="text" name="name_1" value="Границы" style="width: 200px;"><br><br>
                         <label>Ядро (матрица 3x3):</label><br>
                         <textarea name="kernel_1" rows="2" cols="40">[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]</textarea><br>
                         <button type="button" onclick="removeLayer(1)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
                     </div>
-                    <div class="layer-card" data-layer="2">
-                        <h4>📌 Слой 2</h4>
+                    <div class="layer-card" data-layer="2" data-type="conv">
+                        <h4>📌 Слой 2 (Свёртка)</h4>
                         <label>Название слоя:</label>
                         <input type="text" name="name_2" value="Размытие" style="width: 200px;"><br><br>
                         <label>Ядро (матрица 3x3):</label><br>
@@ -305,10 +341,14 @@ HTML_TEMPLATE = '''
                     </div>
                 </div>
 
-                <button type="button" onclick="addLayer()">➕ Добавить свёрточный слой</button>
+                <div style="margin: 10px 0;">
+                    <button type="button" onclick="addLayer('conv')">➕ Добавить свёрточный слой</button>
+                    <button type="button" onclick="addLayer('pool')">📐 Добавить MaxPooling слой</button>
+                </div>
                 <button type="button" onclick="loadArchitecture('edges')" style="background:#28a745;">🔲 Границы → Размытие → Резкость</button>
                 <button type="button" onclick="loadArchitecture('blur')" style="background:#28a745;">📷 Только размытие (2 слоя)</button>
                 <button type="button" onclick="loadArchitecture('sharpen')" style="background:#28a745;">🔪 Только резкость</button>
+                <button type="button" onclick="loadArchitecture('vgg_block')" style="background:#17a2b8;">🏗️ VGG блок (Свёртка→Свёртка→Pooling)</button>
 
                 <br><br>
                 <button type="submit">🚀 Запустить нейросеть</button>
@@ -348,7 +388,6 @@ HTML_TEMPLATE = '''
 
 
 def convolution_matrix(matrix, kernel, stride=1, padding=0):
-
     rows, cols = len(matrix), len(matrix[0])
     krows, kcols = len(kernel), len(kernel[0])
 
@@ -412,6 +451,28 @@ def normalize_matrix_for_display(matrix):
         normalized = [[128 for val in row] for row in matrix]
 
     return normalized
+
+
+def max_pooling(matrix, pool_size=2, stride=2):
+    rows, cols = len(matrix), len(matrix[0])
+    res_rows = (rows - pool_size) // stride + 1
+    res_cols = (cols - pool_size) // stride + 1
+
+    if res_rows <= 0 or res_cols <= 0:
+        raise ValueError("Pooling размер слишком большой для данной матрицы")
+
+    result = [[0] * res_cols for _ in range(res_rows)]
+
+    for i in range(0, res_rows * stride, stride):
+        for j in range(0, res_cols * stride, stride):
+            max_val = matrix[i][j]
+            for pi in range(pool_size):
+                for pj in range(pool_size):
+                    if matrix[i + pi][j + pj] > max_val:
+                        max_val = matrix[i + pi][j + pj]
+            result[i // stride][j // stride] = max_val
+
+    return result
 
 
 @app.route('/', methods=['GET'])
@@ -504,32 +565,52 @@ def multilayer_mode():
         img_array = [[float(img.getpixel((x, y))) for x in range(img.width)] for y in range(img.height)]
 
         layers = []
+        layer_keys = {}
         for key in request.form:
-            if key.startswith('kernel_'):
+            if key.startswith('name_'):
                 layer_num = key.split('_')[1]
-                kernel_str = request.form[key]
+                layer_keys[layer_num] = request.form[key]
+
+        for layer_num in sorted(layer_keys.keys(), key=int):
+            layer_name = layer_keys[layer_num]
+
+            if request.form.get(f'is_pool_{layer_num}'):
+                layers.append({
+                    'type': 'pool',
+                    'name': layer_name
+                })
+            else:
+                kernel_str = request.form.get(f'kernel_{layer_num}', '')
                 if kernel_str and kernel_str.strip():
                     kernel = parse_kernel(kernel_str)
-                    layer_name = request.form.get(f'name_{layer_num}', f'Слой {layer_num}')
                     layers.append({
-                        'kernel': kernel,
-                        'name': layer_name
+                        'type': 'conv',
+                        'name': layer_name,
+                        'kernel': kernel
                     })
 
         if not layers:
             layers = [
-                {'kernel': parse_kernel('[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]'), 'name': 'Границы'},
-                {'kernel': parse_kernel('[[1,1,1],[1,1,1],[1,1,1]]/9'), 'name': 'Размытие'},
-                {'kernel': parse_kernel('[[0,-1,0],[-1,5,-1],[0,-1,0]]'), 'name': 'Резкость'}
+                {'type': 'conv', 'name': 'Границы', 'kernel': parse_kernel('[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]')},
+                {'type': 'conv', 'name': 'Размытие', 'kernel': parse_kernel('[[1,1,1],[1,1,1],[1,1,1]]/9')},
+                {'type': 'conv', 'name': 'Резкость', 'kernel': parse_kernel('[[0,-1,0],[-1,5,-1],[0,-1,0]]')}
             ]
 
         results = []
         current = img_array
 
         for i, layer in enumerate(layers):
-            conv_result = convolution_matrix(current, layer['kernel'])
-            relu_result = apply_relu(conv_result)
-            normalized = normalize_matrix_for_display(relu_result)
+            if layer['type'] == 'conv':
+
+                conv_result = convolution_matrix(current, layer['kernel'])
+                current = apply_relu(conv_result)
+                layer_display_name = f"{layer['name']} (Свёртка+ReLU)"
+            else:
+
+                current = max_pooling(current)
+                layer_display_name = f"{layer['name']} (MaxPooling)"
+
+            normalized = normalize_matrix_for_display(current)
 
             res_img = Image.new('L', (len(normalized[0]), len(normalized)))
             for y in range(len(normalized)):
@@ -539,12 +620,10 @@ def multilayer_mode():
             buf = io.BytesIO()
             res_img.save(buf, format='PNG')
             results.append({
-                'name': layer['name'],
+                'name': layer_display_name,
                 'layer': i + 1,
                 'image_b64': base64.b64encode(buf.getvalue()).decode()
             })
-
-            current = relu_result
 
         original_buf = io.BytesIO()
         img.save(original_buf, format='PNG')
