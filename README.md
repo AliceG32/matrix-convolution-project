@@ -5,6 +5,12 @@
 **[http://w413105.vdi.mipt.ru/](http://w413105.vdi.mipt.ru/)**
 
 ---
+## 🌍 Зеркала репозитория
+
+| Платформа | Ссылка |
+|-----------|--------|
+| GitHub | [https://github.com/AliceG32/matrix-convolution-project](https://github.com/AliceG32/matrix-convolution-project) |
+| GitLab | [gitlab.com/aliseklg/matrix-convolution-project](https://gitlab.com/aliseklg/matrix-convolution-project) |
 
 ## 🎯 Что делает проект
 
@@ -69,6 +75,15 @@
 # Установка
 apt install python3 python3-pip apache2 -y
 pip install -r requirements.txt
+
+# настройка Apache
+cat > /etc/apache2/sites-available/001-matrix.conf << 'EOF'
+<VirtualHost *:80>
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:5000/
+    ProxyPassReverse / http://localhost:5000/
+</VirtualHost>
+EOF
 
 # Запуск Flask
 nohup python3 app.py &
