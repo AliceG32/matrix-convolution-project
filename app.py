@@ -199,70 +199,6 @@ HTML_TEMPLATE = '''
     <div class="container">
         <h1>🔢 Вычисление свёртки матриц</h1>
         
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-            <h2>Сайты проекта</h2>
-                <li> <a href="http://w413105.vdi.mipt.ru/">http://w413105.vdi.mipt.ru/</a></li>
-                <li> <a href="https://alice232.pythonanywhere.com">https://alice232.pythonanywhere.com</a></li>
-            
-            <h2>🎯 О проекте</h2>
-            <p>Проект реализует <b>три режима</b> работы:</p>
-            <ul>
-                <li><b>📊 Режим ввода матриц</b> — свёртка двух матриц с параметрами padding и stride</li>
-                <li><b>🖼️ Режим обработки изображений</b> — применение фильтров (границы, размытие, резкость, Гаусс) к фото</li>
-                <li><b>🏗️ Режим конструктора CNN</b> — многослойная свёрточная сеть с ReLU и MaxPooling</li>
-            </ul>
-            
-            <h2>🧠 Что такое свёртка?</h2>
-            <p>Свёртка (convolution) — операция, при которой <b>ядро</b> (небольшая матрица) скользит по исходной матрице, вычисляя сумму произведений перекрывающихся элементов.</p>
-            <p><b>Применение:</b> обработка изображений (размытие, резкость, границы), свёрточные нейронные сети (CNN), распознавание лиц (Face ID), фильтры в Instagram, TikTok.</p>
-            
-            <h2>🛠 Технологии</h2>
-            <ul>
-                <li><b>Python + Flask</b> — серверная логика</li>
-                <li><b>Apache</b> — веб-сервер (reverse-proxy)</li>
-                <li><b>HTML/CSS</b> — интерфейс</li>
-            </ul>
-            
-            <h2>Зеркала репозитория</h2>
-            <p>Репозиторий продублирован на нескольких платформах:</p>
-            <ul>
-                <li>GitHub: <a href="https://github.com/AliceG32/matrix-convolution-project">github.com/AliceG32/matrix-convolution-project</a></li>
-                <li>GitLab: <a href="https://gitlab.com/aliseklg/matrix-convolution-project">gitlab.com/aliseklg/matrix-convolution-project</a></li>
-            </ul>
-            <h2>🚀 Запуск на сервере</h2>
-            <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto;"><code>
-            # 1. Установка системных пакетов
-            apt update
-            apt install python3 python3-pip apache2 -y
-            
-            # 2. Установка Python-зависимостей
-            pip install -r requirements.txt
-            
-            # 3. настройки Apache
-            cat > /etc/apache2/sites-available/001-matrix.conf << 'EOF'
-            &lt;VirtualHost *:80&gt;
-                ProxyPreserveHost On
-                ProxyPass / http://localhost:5000/
-                ProxyPassReverse / http://localhost:5000/
-            &lt;/VirtualHost&gt;
-            EOF
-            
-            # 4. Активация модулей и сайта
-            a2enmod proxy_http
-            a2dissite 000-default.conf
-            a2ensite 001-matrix.conf
-            
-            # 5. Запуск Flask
-            nohup python3 app.py > flask.log 2>&1 &
-            systemctl restart apache2 </code></pre>
-            
-            <h2>📁 Файлы проекта</h2>
-            <ul>
-                <li><code>app.py</code> — основной код (Flask + свёртка + CNN)</li>
-                <li><code>requirements.txt</code> — зависимости (Flask, Pillow, NumPy)</li>
-                <li><code>README.md</code> — документация</li>
-            </ul>
-        </div>  
         
         <p>Проект по сетевым технологиям - клиент-серверное взаимодействие</p>
 
@@ -273,6 +209,71 @@ HTML_TEMPLATE = '''
         </div>
 
         <div id="mode-matrix">
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <h2>Сайты проекта</h2>
+                    <li> <a href="http://w413105.vdi.mipt.ru/">http://w413105.vdi.mipt.ru/</a></li>
+                    <li> <a href="https://alice232.pythonanywhere.com">https://alice232.pythonanywhere.com</a></li>
+                
+                <h2>🎯 О проекте</h2>
+                <p>Проект реализует <b>три режима</b> работы:</p>
+                <ul>
+                    <li><b>📊 Режим ввода матриц</b> — свёртка двух матриц с параметрами padding и stride</li>
+                    <li><b>🖼️ Режим обработки изображений</b> — применение фильтров (границы, размытие, резкость, Гаусс) к фото</li>
+                    <li><b>🏗️ Режим конструктора CNN</b> — многослойная свёрточная сеть с ReLU и MaxPooling</li>
+                </ul>
+                
+                <h2>🧠 Что такое свёртка?</h2>
+                <p>Свёртка (convolution) — операция, при которой <b>ядро</b> (небольшая матрица) скользит по исходной матрице, вычисляя сумму произведений перекрывающихся элементов.</p>
+                <p><b>Применение:</b> обработка изображений (размытие, резкость, границы), свёрточные нейронные сети (CNN), распознавание лиц (Face ID), фильтры в Instagram, TikTok.</p>
+                
+                <h2>🛠 Технологии</h2>
+                <ul>
+                    <li><b>Python + Flask</b> — серверная логика</li>
+                    <li><b>Apache</b> — веб-сервер (reverse-proxy)</li>
+                    <li><b>HTML/CSS</b> — интерфейс</li>
+                </ul>
+                
+                <h2>Зеркала репозитория</h2>
+                <p>Репозиторий продублирован на нескольких платформах:</p>
+                <ul>
+                    <li>GitHub: <a href="https://github.com/AliceG32/matrix-convolution-project">github.com/AliceG32/matrix-convolution-project</a></li>
+                    <li>GitLab: <a href="https://gitlab.com/aliseklg/matrix-convolution-project">gitlab.com/aliseklg/matrix-convolution-project</a></li>
+                </ul>
+                <h2>🚀 Запуск на сервере</h2>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto;"><code>
+                # 1. Установка системных пакетов
+                apt update
+                apt install python3 python3-pip apache2 -y
+                
+                # 2. Установка Python-зависимостей
+                pip install -r requirements.txt
+                
+                # 3. настройки Apache
+                cat > /etc/apache2/sites-available/001-matrix.conf << 'EOF'
+                &lt;VirtualHost *:80&gt;
+                    ProxyPreserveHost On
+                    ProxyPass / http://localhost:5000/
+                    ProxyPassReverse / http://localhost:5000/
+                &lt;/VirtualHost&gt;
+                EOF
+                
+                # 4. Активация модулей и сайта
+                a2enmod proxy_http
+                a2dissite 000-default.conf
+                a2ensite 001-matrix.conf
+                
+                # 5. Запуск Flask
+                nohup python3 app.py > flask.log 2>&1 &
+                systemctl restart apache2 </code></pre>
+                
+                <h2>📁 Файлы проекта</h2>
+                <ul>
+                    <li><code>app.py</code> — основной код (Flask + свёртка + CNN)</li>
+                    <li><code>requirements.txt</code> — зависимости (Flask, Pillow, NumPy)</li>
+                    <li><code>README.md</code> — документация</li>
+                </ul>
+            </div>  
             <form method="post" action="/matrix">
                 <b>Матрица A (исходная):</b><br>
                 <textarea name="matrix_a" rows="4" cols="50">{{ matrix_a }}</textarea><br><br>
