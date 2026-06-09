@@ -91,19 +91,26 @@ HTML_TEMPLATE = '''
         }
     </style>
     <script>
+        window.onload = function() {
+            const activeMode = "{{ active_mode|default('matrix') }}";
+            switchMode(activeMode);
+        };
+
         function switchMode(mode) {
             document.getElementById('mode-matrix').style.display = mode === 'matrix' ? 'block' : 'none';
             document.getElementById('mode-image').style.display = mode === 'image' ? 'block' : 'none';
             document.getElementById('mode-multilayer').style.display = mode === 'multilayer' ? 'block' : 'none';
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.mode-btn[onclick="switchMode('${mode}')"]`).classList.add('active');
+            
+            const btn = document.querySelector(`.mode-btn[onclick="switchMode('${mode}')"]`);
+            if (btn) btn.classList.add('active');
         }
 
         function setKernel(kernel) {
             document.getElementById('custom_kernel').value = kernel;
         }
 
-        let layerCounter = 0;
+        let layerCounter = {{ current_layers|length if current_layers else 2 }};
         
         function addLayer(type) {
             layerCounter++;
@@ -390,22 +397,45 @@ HTML_TEMPLATE = '''
                 <input type="file" name="image" accept="image/*" required><br><br>
 
                 <div id="layers-container">
-                    <div class="layer-card" data-layer="1" data-type="conv">
-                        <h4>📌 Слой 1 (Свёртка)</h4>
-                        <label>Название слоя:</label>
-                        <input type="text" name="name_1" value="Границы" style="width: 200px;"><br><br>
-                        <label>Ядро (матрица 3x3):</label><br>
-                        <textarea name="kernel_1" rows="2" cols="40">[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]</textarea><br>
-                        <button type="button" onclick="removeLayer(1)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
-                    </div>
-                    <div class="layer-card" data-layer="2" data-type="conv">
-                        <h4>📌 Слой 2 (Свёртка)</h4>
-                        <label>Название слоя:</label>
-                        <input type="text" name="name_2" value="Размытие" style="width: 200px;"><br><br>
-                        <label>Ядро (матрица 3x3):</label><br>
-                        <textarea name="kernel_2" rows="2" cols="40">[[1,1,1],[1,1,1],[1,1,1]]/9</textarea><br>
-                        <button type="button" onclick="removeLayer(2)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
-                    </div>
+                    {% if current_layers %}
+                        {% for layer in current_layers %}
+                            {% if layer.type == 'conv' %}
+                            <div class="layer-card" data-layer="{{ layer.id }}" data-type="conv">
+                                <h4>📌 Слой {{ layer.id }} (Свёртка)</h4>
+                                <label>Название слоя:</label>
+                                <input type="text" name="name_{{ layer.id }}" value="{{ layer.name }}" style="width: 200px;"><br><br>
+                                <label>Ядро (матрица 3x3):</label><br>
+                                <textarea name="kernel_{{ layer.id }}" rows="2" cols="40">{{ layer.raw_kernel }}</textarea><br>
+                                <button type="button" onclick="removeLayer({{ layer.id }})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                            </div>
+                            {% elif layer.type == 'pool' %}
+                            <div class="layer-card" data-layer="{{ layer.id }}" data-type="pool">
+                                <h4>📌 Слой {{ layer.id }} (MaxPooling)</h4>
+                                <input type="text" name="name_{{ layer.id }}" value="{{ layer.name }}" style="width: 200px;"><br><br>
+                                <label>Тип: MaxPooling (уменьшает картинку в 2 раза)</label><br>
+                                <input type="hidden" name="is_pool_{{ layer.id }}" value="true">
+                                <button type="button" onclick="removeLayer({{ layer.id }})" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="layer-card" data-layer="1" data-type="conv">
+                            <h4>📌 Слой 1 (Свёртка)</h4>
+                            <label>Название слоя:</label>
+                            <input type="text" name="name_1" value="Границы" style="width: 200px;"><br><br>
+                            <label>Ядро (матрица 3x3):</label><br>
+                            <textarea name="kernel_1" rows="2" cols="40">[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]</textarea><br>
+                            <button type="button" onclick="removeLayer(1)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                        </div>
+                        <div class="layer-card" data-layer="2" data-type="conv">
+                            <h4>📌 Слой 2 (Свёртка)</h4>
+                            <label>Название слоя:</label>
+                            <input type="text" name="name_2" value="Размытие" style="width: 200px;"><br><br>
+                            <label>Ядро (матрица 3x3):</label><br>
+                            <textarea name="kernel_2" rows="2" cols="40">[[1,1,1],[1,1,1],[1,1,1]]/9</textarea><br>
+                            <button type="button" onclick="removeLayer(2)" style="background:#dc3545; margin-top:10px;">❌ Удалить слой</button>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div style="margin: 10px 0;">
@@ -563,6 +593,7 @@ def matrix_mode():
         res = convolution_matrix(a, b, stride, padding)
 
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="matrix",
                                       matrix_a=matrix_a_str,
                                       matrix_b=matrix_b_str,
                                       padding=padding,
@@ -575,6 +606,7 @@ def matrix_mode():
                                       res_rows=len(res), res_cols=len(res[0]))
     except Exception as e:
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="matrix",
                                       error=str(e),
                                       matrix_a=request.form.get('matrix_a', ''),
                                       matrix_b=request.form.get('matrix_b', ''),
@@ -616,16 +648,21 @@ def image_mode():
         result_b64 = base64.b64encode(result_buf.getvalue()).decode()
 
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="image",
+                                      custom_kernel=kernel_str,
                                       original_image=original_b64,
                                       result_image=result_b64,
                                       kernel_used=json.dumps(kernel, indent=2))
     except Exception as e:
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="image",
+                                      custom_kernel=request.form.get('custom_kernel', ''),
                                       error=f"Ошибка обработки: {str(e)}")
 
 
 @app.route('/multilayer', methods=['POST'])
 def multilayer_mode():
+    layers_to_render = []
     try:
         file = request.files['image']
         img = Image.open(file.stream).convert('L')
@@ -646,6 +683,11 @@ def multilayer_mode():
                     'type': 'pool',
                     'name': layer_name
                 })
+                layers_to_render.append({
+                    'id': layer_num,
+                    'type': 'pool',
+                    'name': layer_name
+                })
             else:
                 kernel_str = request.form.get(f'kernel_{layer_num}', '')
                 if kernel_str and kernel_str.strip():
@@ -655,6 +697,12 @@ def multilayer_mode():
                         'name': layer_name,
                         'kernel': kernel
                     })
+                    layers_to_render.append({
+                        'id': layer_num,
+                        'type': 'conv',
+                        'name': layer_name,
+                        'raw_kernel': kernel_str
+                    })
 
         if not layers:
             layers = [
@@ -662,18 +710,21 @@ def multilayer_mode():
                 {'type': 'conv', 'name': 'Размытие', 'kernel': parse_kernel('[[1,1,1],[1,1,1],[1,1,1]]/9')},
                 {'type': 'conv', 'name': 'Резкость', 'kernel': parse_kernel('[[0,-1,0],[-1,5,-1],[0,-1,0]]')}
             ]
+            layers_to_render = [
+                {'id': 1, 'type': 'conv', 'name': 'Границы', 'raw_kernel': '[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]'},
+                {'id': 2, 'type': 'conv', 'name': 'Размытие', 'raw_kernel': '[[1,1,1],[1,1,1],[1,1,1]]/9'},
+                {'id': 3, 'type': 'conv', 'name': 'Резкость', 'raw_kernel': '[[0,-1,0],[-1,5,-1],[0,-1,0]]'}
+            ]
 
         results = []
         current = img_array
 
         for i, layer in enumerate(layers):
             if layer['type'] == 'conv':
-
                 conv_result = convolution_matrix(current, layer['kernel'])
                 current = apply_relu(conv_result)
                 layer_display_name = f"{layer['name']} (Свёртка+ReLU)"
             else:
-
                 current = max_pooling(current)
                 layer_display_name = f"{layer['name']} (MaxPooling)"
 
@@ -697,10 +748,14 @@ def multilayer_mode():
         original_b64 = base64.b64encode(original_buf.getvalue()).decode()
 
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="multilayer",
+                                      current_layers=layers_to_render,
                                       multilayer_original=original_b64,
                                       multilayer_results=results)
     except Exception as e:
         return render_template_string(HTML_TEMPLATE,
+                                      active_mode="multilayer",
+                                      current_layers=layers_to_render,
                                       multilayer_error=f"Ошибка: {str(e)}")
 
 
