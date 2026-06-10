@@ -223,6 +223,9 @@ HTML_TEMPLATE = '''
                     <li> <a href="https://alice232.pythonanywhere.com">https://alice232.pythonanywhere.com</a></li>
                 
                 <h2>🎯 О проекте</h2>
+                <p>Автор проекта: Галицына Алиса</p>
+                <p>Группа: Б13-401</p>
+                <p>МФТИ</p>
                 <p>Проект реализует <b>три режима</b> работы:</p>
                 <ul>
                     <li><b>📊 Режим ввода матриц</b> — свёртка двух матриц с параметрами padding и stride</li>
